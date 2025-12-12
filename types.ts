@@ -1,5 +1,5 @@
 export type TransactionType = 'expense' | 'income' | 'investment';
-export type Frequency = 'daily' | 'weekly' | 'monthly';
+export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
 export interface User {
   id: string;
@@ -49,8 +49,9 @@ export interface Transaction {
 }
 
 export interface FinancialSummary {
-  totalIncome: number;
-  totalExpense: number;
-  totalInvestment: number;
+  income: number;
+  expenses: number;
+  investments: number;
   balance: number;
+  investmentReturns: number;
 }

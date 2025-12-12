@@ -161,6 +161,7 @@ const App: React.FC = () => {
       unsubGoals();
       unsubRecurring();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Check if user has localStorage data to migrate
@@ -316,7 +317,7 @@ const App: React.FC = () => {
     if (user && recurringTransactions.length > 0) {
       processRecurringTransactions();
     }
-  }, [user, recurringTransactions]);
+  }, [user, recurringTransactions, processRecurringTransactions]);
 
   // Financial calculations
   const { currentMonthTransactions, summary } = useMemo(() => {
