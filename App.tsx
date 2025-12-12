@@ -802,50 +802,54 @@ const App: React.FC = () => {
       <div className="max-w-md mx-auto pb-20">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <h1 className="text-xl font-black leading-none">jebkharch</h1>
-                <p className="text-xs text-indigo-100">Hi, {user.name.split(' ')[0]}!</p>
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              {/* Left: Logo */}
+              <img
+                src="/logo.png"
+                alt="JebKharch"
+                className="h-16 w-auto object-contain flex-shrink-0"
+              />
+              {/* Right: Icons and greeting */}
+              <div className="flex flex-col items-end gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAITutorial(true)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                    title="AI Features Guide"
+                  >
+                    <HelpCircle size={20} />
+                  </button>
+                  <button
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                  </button>
+                  <button
+                    onClick={() => setIsPrivacyMode(!isPrivacyMode)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {/* User greeting */}
+                <p className="text-sm text-white/90 font-medium pr-2">Hi, {user.name.split(' ')[0]}! 👋</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowAITutorial(true)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                title="AI Features Guide"
-              >
-                <HelpCircle size={20} />
-              </button>
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              <button
-                onClick={() => setIsPrivacyMode(!isPrivacyMode)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              >
-                {isPrivacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-          </div>
 
-          {/* Month Navigation */}
-          <div className="flex items-center justify-between">
-            <button onClick={goToPreviousMonth} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
-              <ChevronLeft size={18} />
-            </button>
-            <button onClick={goToCurrentMonth} className={`text-sm font-bold ${isCurrentMonth() ? 'text-white' : 'text-indigo-200 hover:text-white'}`}>
-              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </button>
-            <button onClick={goToNextMonth} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
-              <ChevronRight size={18} />
-            </button>
+            {/* Month Navigation */}
+            <div className="flex items-center justify-between">
+              <button onClick={goToPreviousMonth} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                <ChevronLeft size={18} />
+              </button>
+              <button onClick={goToCurrentMonth} className={`text-sm font-bold ${isCurrentMonth() ? 'text-white' : 'text-white/70 hover:text-white'}`}>
+                {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </button>
+              <button onClick={goToNextMonth} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
         </div>
 

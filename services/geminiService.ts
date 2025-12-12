@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction } from "../types";
 
-const STORAGE_KEY = 'smartspend_gemini_api_key';
+const STORAGE_KEY = 'JebKharch_gemini_api_key';
 
 // Helper functions for API key management
 export const getUserApiKey = (): string | null => {

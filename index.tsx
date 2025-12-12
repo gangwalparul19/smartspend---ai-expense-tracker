@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './pwa-register'; // Register PWA service worker
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

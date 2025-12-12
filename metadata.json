@@ -1,5 +1,5 @@
 {
-  "name": "SmartSpend - AI Expense Tracker",
+  "name": "JebKharch - AI Expense Tracker",
   "description": "A mobile-first financial tracking application with AI-powered insights for daily expenses, investments, and PF contributions.",
   "requestFramePermissions": [
     "camera",

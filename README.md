@@ -106,7 +106,7 @@ The guide covers:
 ## 📂 Project Structure
 
 ```
-smartspend---ai-expense-tracker/
+JebKharch---ai-expense-tracker/
 ├── components/          # React components
 ├── services/            # AI and API services
 ├── App.tsx             # Main application component

@@ -50,7 +50,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `smartspend_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `JebKharch_export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
@@ -90,8 +90,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
             <div key={t.id} className="group bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between transition-transform active:scale-[0.98]">
               <div className="flex items-center gap-4">
                 <div className={`h-10 w-10 flex items-center justify-center rounded-full shadow-inner ${t.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' :
-                    t.type === 'investment' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
-                      'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400'
+                  t.type === 'investment' ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                    'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400'
                   }`}>
                   {getIcon(t.category)}
                 </div>
@@ -114,8 +114,8 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
               </div>
               <div className="flex items-center gap-3">
                 <span className={`font-bold text-sm ${t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' :
-                    t.type === 'investment' ? 'text-indigo-600 dark:text-indigo-400' :
-                      'text-slate-800 dark:text-slate-200'
+                  t.type === 'investment' ? 'text-indigo-600 dark:text-indigo-400' :
+                    'text-slate-800 dark:text-slate-200'
                   }`}>
                   {isPrivacyMode ? '••••••' : (t.type === 'expense' ? '-' : '+') + formatter.format(t.amount)}
                 </span>
