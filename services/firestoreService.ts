@@ -16,6 +16,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Transaction, Category, SavingsGoal, RecurringTransaction } from '../types';
+import { Debt } from '../types/debt';
+import { addDoc } from 'firebase/firestore';
 
 /**
  * Firestore Service - Professional database operations for lakhs of users
@@ -407,4 +409,50 @@ export const batchAddCategories = async (userId: string, categories: Omit<Catego
         console.error('Error batch adding categories:', error);
         throw new Error('Failed to migrate categories');
     }
+};
+
+export const addDebt = async (userId: string, debt: Omit<Debt, 'id'>): Promise<void> => {
+    try {
+        const debtRef = collection(db, `users/${userId}/debts`);
+        await addDoc(debtRef, debt);
+    } catch (error) {
+        console.error('Error adding debt:', error);
+        throw new Error('Failed to add debt');
+    }
+};
+
+export const updateDebt = async (userId: string, debt: Debt): Promise<void> => {
+    try {
+        const debtRef = doc(db, `users/${userId}/debts/${debt.id}`);
+        await updateDoc(debtRef, { ...debt });
+    } catch (error) {
+        console.error('Error updating debt:', error);
+        throw new Error('Failed to update debt');
+    }
+};
+
+export const deleteDebt = async (userId: string, debtId: string): Promise<void> => {
+    try {
+        const debtRef = doc(db, `users/${userId}/debts/${debtId}`);
+        await deleteDoc(debtRef);
+    } catch (error) {
+        console.error('Error deleting debt:', error);
+        throw new Error('Failed to delete debt');
+    }
+};
+
+export const onDebtsSnapshot = (
+    userId: string,
+    callback: (debts: Debt[]) => void
+): (() => void) => {
+    const debtsRef = collection(db, `users/${userId}/debts`);
+    const q = query(debtsRef, orderBy('createdAt', 'desc'));
+
+    return onSnapshot(q, (snapshot) => {
+        const debts: Debt[] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        } as Debt));
+        callback(debts);
+    });
 };

@@ -31,7 +31,6 @@ export const GoalTracker: React.FC<GoalTrackerProps> = ({ goals, onAddGoal, onUp
   const handleAdd = () => {
     if (newGoalName && newGoalTarget) {
       onAddGoal({
-        id: Date.now().toString(),
         name: newGoalName,
         targetAmount: parseFloat(newGoalTarget),
         currentAmount: parseFloat(newGoalCurrent) || 0,

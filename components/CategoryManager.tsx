@@ -47,8 +47,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
 
   const handleAdd = () => {
     if (newName.trim()) {
-      const newCat: Category = {
-        id: Date.now().toString(),
+      const newCat: Omit<Category, 'id'> = {
         name: newName.trim(),
         type: activeType,
         isDefault: false,
@@ -80,8 +79,8 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
             key={t}
             onClick={() => { setActiveType(t); setIsAdding(false); setEditingId(null); }}
             className={`py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeType === t
-                ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white ring-1 ring-black/5 dark:ring-white/10'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
           >
             {t}
@@ -95,7 +94,7 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
                 <div className={`p-2 rounded-full ${activeType === 'expense' ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-500' :
-                    activeType === 'income' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                  activeType === 'income' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
                   }`}>
                   <Tag size={18} />
                 </div>

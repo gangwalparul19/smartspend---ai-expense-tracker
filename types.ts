@@ -47,6 +47,9 @@ export interface Transaction {
   type: TransactionType;
   currentValue?: number; // For investments: current market value
   tags?: string[]; // Optional tags for better organization
+  receiptUrl?: string; // Firebase Storage URL for receipt
+  receiptFileName?: string; // Original filename
+  receiptUploadedAt?: string; // Timestamp when receipt was uploaded
 }
 
 export interface FinancialSummary {

@@ -15,9 +15,14 @@ import { UpcomingBills } from './components/UpcomingBills';
 import { SearchFilter } from './components/SearchFilter';
 import { BudgetAlert, UpcomingBillAlert } from './components/BudgetAlert';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { LayoutGrid, Plus, PieChart, Sparkles, Settings, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Calculator, Eye, EyeOff, Trash2, AlertTriangle, Key, Check, Loader2, HelpCircle } from 'lucide-react';
+import { LayoutGrid, Plus, PieChart, Sparkles, Settings, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Calculator, Eye, EyeOff, Trash2, AlertTriangle, Key, Check, Loader2, HelpCircle, CreditCard } from 'lucide-react';
 import { isApiKeyAvailable, getUserApiKey, setUserApiKey, clearUserApiKey } from './services/geminiService';
 import { onAuthStateChanged, signOut } from './services/authService';
+import { DebtTracker } from './components/DebtTracker';
+import { ReceiptUpload } from './components/ReceiptUpload';
+import { ReceiptViewer } from './components/ReceiptViewer';
+import { uploadReceipt, deleteReceipt } from './services/storageService';
+import { Debt } from './types/debt';
 import {
   onTransactionsSnapshot,
   onCategoriesSnapshot,
@@ -38,8 +43,13 @@ import {
   getMonthlyBudget,
   setMonthlyBudget as setMonthlyBudgetInFirestore,
   batchAddTransactions,
-  batchAddCategories
+  batchAddCategories,
+  addDebt,
+  updateDebt,
+  deleteDebt,
+  onDebtsSnapshot
 } from './services/firestoreService';
+
 
 const DEFAULT_CATEGORIES: Category[] = [
   { id: '1', name: 'Food', type: 'expense', isDefault: true, budgetLimit: 5000 },
@@ -71,7 +81,7 @@ const App: React.FC = () => {
   const [dataLoading, setDataLoading] = useState(false);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'charts' | 'ai' | 'add' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'charts' | 'analytics' | 'ai' | 'add' | 'settings'>('dashboard');
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showGoalTracker, setShowGoalTracker] = useState(false);
   const [showRecurringManager, setShowRecurringManager] = useState(false);
@@ -91,6 +101,11 @@ const App: React.FC = () => {
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  //Debt
+  const [debts, setDebts] = useState<Debt[]>([]);
+  const [showDebtTracker, setShowDebtTracker] = useState(false);
+  const [viewingReceipt, setViewingReceipt] = useState<{ url: string; fileName: string } | null>(null);
 
   // Migration state
   const [migrationChecked, setMigrationChecked] = useState(false);
@@ -151,6 +166,11 @@ const App: React.FC = () => {
       setGoals(goals);
     });
 
+    // Debts listener
+    const unsubDebts = onDebtsSnapshot(user.id, (debts) => {
+      setDebts(debts);
+    });
+
     // Recurring transactions listener
     const unsubRecurring = onRecurringTransactionsSnapshot(user.id, (recurring) => {
       setRecurringTransactions(recurring);
@@ -167,6 +187,7 @@ const App: React.FC = () => {
       unsubCategories();
       unsubGoals();
       unsubRecurring();
+      unsubDebts();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -496,6 +517,46 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddDebt = async (debt: Debt) => {
+    if (!user) return;
+    await addDebt(user.id, debt);
+  };
+  const handleUpdateDebt = async (debt: Debt) => {
+    if (!user) return;
+    await updateDebt(user.id, debt);
+  };
+  const handleDeleteDebt = async (id: string) => {
+    if (!user) return;
+    await deleteDebt(user.id, id);
+  };
+  const handleReceiptUpload = async (transactionId: string, file: File) => {
+    if (!user) return;
+    const { url, fileName } = await uploadReceipt(user.id, transactionId, file);
+
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction) {
+      await updateTransactionInFirestore(user.id, {
+        ...transaction,
+        receiptUrl: url,
+        receiptFileName: fileName,
+        receiptUploadedAt: new Date().toISOString()
+      });
+    }
+  };
+  const handleReceiptDelete = async (transactionId: string) => {
+    if (!user) return;
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (transaction?.receiptFileName) {
+      await deleteReceipt(user.id, transaction.receiptFileName);
+      await updateTransactionInFirestore(user.id, {
+        ...transaction,
+        receiptUrl: undefined,
+        receiptFileName: undefined,
+        receiptUploadedAt: undefined
+      });
+    }
+  };
+
   // Budget handlers
   const handleBudgetChange = async (newBudget: number) => {
     if (!user) return;
@@ -674,6 +735,32 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Debt Tracker Modal */}
+      {showDebtTracker && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-screen px-4 py-8">
+            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+              <DebtTracker
+                debts={debts}
+                onAddDebt={handleAddDebt}
+                onUpdateDebt={handleUpdateDebt}
+                onDeleteDebt={handleDeleteDebt}
+                onClose={() => setShowDebtTracker(false)}
+                isPrivacyMode={isPrivacyMode}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Receipt Viewer Modal */}
+      {viewingReceipt && (
+        <ReceiptViewer
+          receiptUrl={viewingReceipt.url}
+          fileName={viewingReceipt.fileName}
+          onClose={() => setViewingReceipt(null)}
+        />
+      )}
+
       {showRecurringManager && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
           <div className="min-h-screen px-4 py-8">
@@ -776,6 +863,32 @@ const App: React.FC = () => {
             <div className="space-y-6 animate-fade-in">
               <SummaryCards summary={summary} isPrivacyMode={isPrivacyMode} />
 
+              {/* Budget Alerts */}
+              {monthlyBudget > 0 && (
+                <BudgetAlert
+                  currentSpending={summary.expenses}
+                  monthlyBudget={monthlyBudget}
+                  thresholdPercentage={80}
+                />
+              )}
+
+              {/* Upcoming Bill Reminders */}
+              {recurringTransactions.filter(rt => rt.active && rt.type === 'expense').slice(0, 2).map((bill) => {
+                const dueDate = new Date(bill.nextDueDate);
+                const today = new Date();
+                const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysUntilDue > 7 || daysUntilDue < 0) return null;
+                return (
+                  <UpcomingBillAlert
+                    key={bill.id}
+                    billDescription={bill.description}
+                    amount={bill.amount}
+                    dueDate={bill.nextDueDate}
+                    daysUntilDue={daysUntilDue}
+                  />
+                );
+              })}
+
               <CategoryBudgets
                 transactions={currentMonthTransactions}
                 categories={categories}
@@ -789,8 +902,15 @@ const App: React.FC = () => {
                 isPrivacyMode={isPrivacyMode}
               />
 
+              {/* Search & Filter */}
+              <SearchFilter
+                transactions={transactions}
+                categories={categories}
+                onFilterChange={(filtered) => setFilteredTransactions(filtered)}
+              />
+
               <TransactionList
-                transactions={currentMonthTransactions}
+                transactions={filteredTransactions.length > 0 ? filteredTransactions : currentMonthTransactions}
                 onDelete={handleDeleteTransaction}
                 onUpdate={handleUpdateTransaction}
                 isPrivacyMode={isPrivacyMode}
@@ -803,6 +923,17 @@ const App: React.FC = () => {
               <Visuals
                 transactions={currentMonthTransactions}
                 categories={categories}
+                isPrivacyMode={isPrivacyMode}
+              />
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="animate-fade-in">
+              <AnalyticsDashboard
+                transactions={transactions}
+                categories={categories}
+                currentDate={currentDate}
                 isPrivacyMode={isPrivacyMode}
               />
             </div>
@@ -827,6 +958,18 @@ const App: React.FC = () => {
                 </button>
               </div>
 
+              {/* Debt Tracker Button */}
+              <button
+                onClick={() => setShowDebtTracker(true)}
+                className="w-full flex items-center gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+              >
+                <CreditCard size={20} className="text-rose-500" />
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-slate-800 dark:text-white text-sm">Debt Tracker</p>
+                  <p className="text-xs text-slate-500">Manage loans, cards & EMIs</p>
+                </div>
+              </button>
+
               {/* AI Features / API Key Management */}
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800 space-y-3 shadow-sm">
                 <div className="flex items-center gap-2 mb-2">
@@ -842,17 +985,23 @@ const App: React.FC = () => {
                 </div>
 
                 {hasApiKey ? (
-                  <>
+                  <div className="space-y-3">
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      AI features are <strong>enabled</strong>. You can use natural language input, receipt scanning, and AI advisor.
+                      AI features are <strong>enabled</strong>. Natural language input, receipt scanning, and AI advisor are active.
                     </p>
-                    <button
-                      onClick={handleRemoveApiKey}
-                      className="w-full py-2.5 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-                    >
-                      Remove API Key
-                    </button>
-                  </>
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Check size={16} className="text-green-600" />
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">API Key Active</span>
+                      </div>
+                      <button
+                        onClick={handleRemoveApiKey}
+                        className="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold rounded-lg text-xs hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
@@ -963,6 +1112,13 @@ const App: React.FC = () => {
               className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === 'charts' ? 'text-indigo-600 scale-110' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
               <PieChart size={22} strokeWidth={activeTab === 'charts' ? 2.5 : 2} />
+            </button>
+
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === 'analytics' ? 'text-indigo-600 scale-110' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            >
+              <Calculator size={22} strokeWidth={activeTab === 'analytics' ? 2.5 : 2} />
             </button>
 
             <button

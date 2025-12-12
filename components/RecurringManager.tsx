@@ -33,8 +33,7 @@ export const RecurringManager: React.FC<RecurringManagerProps> = ({
 
     const selectedCategory = categories.find(c => c.id === categoryId);
 
-    const newRecurring: RecurringTransaction = {
-      id: Date.now().toString(),
+    const newRecurring: Omit<RecurringTransaction, 'id'> = {
       description,
       amount: parseFloat(amount),
       category: selectedCategory ? selectedCategory.name : 'Unknown',
