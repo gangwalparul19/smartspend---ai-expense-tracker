@@ -12,6 +12,9 @@ import { GoalTracker } from './components/GoalTracker';
 import { RecurringManager } from './components/RecurringManager';
 import { CategoryBudgets } from './components/CategoryBudgets';
 import { UpcomingBills } from './components/UpcomingBills';
+import { SearchFilter } from './components/SearchFilter';
+import { BudgetAlert, UpcomingBillAlert } from './components/BudgetAlert';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { LayoutGrid, Plus, PieChart, Sparkles, Settings, LogOut, Moon, Sun, ChevronLeft, ChevronRight, Calculator, Eye, EyeOff, Trash2, AlertTriangle, Key, Check, Loader2, HelpCircle } from 'lucide-react';
 import { isApiKeyAvailable, getUserApiKey, setUserApiKey, clearUserApiKey } from './services/geminiService';
 import { onAuthStateChanged, signOut } from './services/authService';
@@ -74,6 +77,10 @@ const App: React.FC = () => {
   const [showRecurringManager, setShowRecurringManager] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showAITutorial, setShowAITutorial] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
+  // Search & Filter State
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
   // Date Filtering
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -636,46 +643,68 @@ const App: React.FC = () => {
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-slate-950' : 'bg-slate-50'} transition-colors duration-300`}>
       {/* Modals */}
       {showCategoryManager && (
-        <CategoryManager
-          categories={categories}
-          onAddCategory={handleAddCategory}
-          onUpdateCategory={handleUpdateCategory}
-          onDeleteCategory={handleDeleteCategory}
-          onClose={() => setShowCategoryManager(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-screen px-4 py-8">
+            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+              <CategoryManager
+                categories={categories}
+                onAddCategory={handleAddCategory}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onClose={() => setShowCategoryManager(false)}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {showGoalTracker && (
-        <GoalTracker
-          goals={goals}
-          onAddGoal={handleAddGoal}
-          onUpdateGoal={handleUpdateGoal}
-          onDeleteGoal={handleDeleteGoal}
-          onClose={() => setShowGoalTracker(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-screen px-4 py-8">
+            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+              <GoalTracker
+                goals={goals}
+                onAddGoal={handleAddGoal}
+                onUpdateGoal={handleUpdateGoal}
+                onDeleteGoal={handleDeleteGoal}
+                onClose={() => setShowGoalTracker(false)}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {showRecurringManager && (
-        <RecurringManager
-          recurringTransactions={recurringTransactions}
-          categories={categories}
-          onAddRecurring={handleAddRecurring}
-          onToggleRecurring={handleToggleRecurring}
-          onDeleteRecurring={handleDeleteRecurring}
-          onClose={() => setShowRecurringManager(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+          <div className="min-h-screen px-4 py-8">
+            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+              <RecurringManager
+                recurringTransactions={recurringTransactions}
+                categories={categories}
+                onAddRecurring={handleAddRecurring}
+                onToggleRecurring={handleToggleRecurring}
+                onDeleteRecurring={handleDeleteRecurring}
+                onClose={() => setShowRecurringManager(false)}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {showAddTransaction && (
-        <AddTransaction
-          categories={categories}
-          onAdd={handleAddTransaction}
-          onClose={() => setShowAddTransaction(false)}
-          onOpenCategoryManager={() => {
-            setShowAddTransaction(false);
-            setShowCategoryManager(true);
-          }}
-        />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+            <AddTransaction
+              categories={categories}
+              onAdd={handleAddTransaction}
+              onClose={() => setShowAddTransaction(false)}
+              onOpenCategoryManager={() => {
+                setShowAddTransaction(false);
+                setShowCategoryManager(true);
+              }}
+            />
+          </div>
+        </div>
       )}
 
       {showAITutorial && (

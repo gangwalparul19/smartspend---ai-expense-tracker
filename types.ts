@@ -46,6 +46,7 @@ export interface Transaction {
   categoryId?: string; // Optional reference to Category ID
   type: TransactionType;
   currentValue?: number; // For investments: current market value
+  tags?: string[]; // Optional tags for better organization
 }
 
 export interface FinancialSummary {

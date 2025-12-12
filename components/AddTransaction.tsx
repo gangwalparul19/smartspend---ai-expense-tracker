@@ -24,6 +24,8 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
     const [type, setType] = useState<TransactionType>('expense');
     const [categoryId, setCategoryId] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState('');
 
     // Check if AI features are available
     const hasApiKey = isApiKeyAvailable();
@@ -165,6 +167,7 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
             category: selectedCategory ? selectedCategory.name : 'Unknown',
             categoryId: categoryId,
             type,
+            tags: tags.length > 0 ? tags : undefined,
         };
 
         onAdd(newTransaction);
@@ -270,8 +273,8 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
                                 type="button"
                                 onClick={() => setType(t)}
                                 className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${type === t
-                                        ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
-                                        : 'text-slate-500 dark:text-slate-400'
+                                    ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
+                                    : 'text-slate-500 dark:text-slate-400'
                                     }`}
                             >
                                 {t}
@@ -326,6 +329,38 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
                                 className="w-full text-sm font-bold bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-300"
                             />
                         </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 focus-within:ring-2 focus-within:ring-indigo-500 transition-shadow shadow-sm">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tags (Optional)</label>
+                        <div className="flex flex-wrap gap-2">
+                            {tags.map((tag, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs font-bold flex items-center gap-1">
+                                    {tag}
+                                    <button type="button" onClick={() => setTags(tags.filter((_, i) => i !== idx))} className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full">
+                                        <X size={12} />
+                                    </button>
+                                </span>
+                            ))}
+                            <input
+                                type="text"
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && tagInput.trim()) {
+                                        e.preventDefault();
+                                        if (!tags.includes(tagInput.trim())) {
+                                            setTags([...tags, tagInput.trim()]);
+                                        }
+                                        setTagInput('');
+                                    }
+                                }}
+                                placeholder="Add tag..."
+                                className="flex-1 min-w-[100px] text-sm font-medium bg-transparent text-slate-800 dark:text-white focus:outline-none placeholder-slate-300"
+                            />
+                        </div>
+                        <p className="text-[10px] text-slate-400">Press Enter to add tags</p>
                     </div>
 
                     {/* Category Dropdown & Date Row */}
