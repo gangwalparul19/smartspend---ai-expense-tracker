@@ -68,11 +68,8 @@ const DEFAULT_CATEGORIES: Category[] = [
 const AppContent: React.FC = () => {
   const { showToast } = useToast();
 
-  // Theme
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('smartspend_theme');
-    return saved ? saved === 'dark' : true;
-  });
+  // Theme - Always dark mode
+  const isDarkMode = true;
 
   const [isPrivacyMode, setIsPrivacyMode] = useState<boolean>(false);
 
@@ -97,6 +94,9 @@ const AppContent: React.FC = () => {
 
   // Date Filtering
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // Track if recurring transactions have been processed this session
+  const recurringProcessedRef = React.useRef(false);
 
   // Data from Firestore
   const [monthlyBudget, setMonthlyBudget] = useState<number>(0);
@@ -132,6 +132,8 @@ const AppContent: React.FC = () => {
         setGoals([]);
         setRecurringTransactions([]);
         setMonthlyBudget(0);
+        // Reset the recurring processed flag for next login
+        recurringProcessedRef.current = false;
       }
     });
 
@@ -273,15 +275,10 @@ const AppContent: React.FC = () => {
     }
   };
 
-  // Theme management
+  // Theme management - Always dark mode
   useEffect(() => {
-    localStorage.setItem('smartspend_theme', isDarkMode ? 'dark' : 'light');
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   // Recurring transactions processing
   const processRecurringTransactions = useCallback(async () => {
@@ -296,56 +293,84 @@ const AppContent: React.FC = () => {
       let nextDue = new Date(rt.nextDueDate);
       nextDue.setHours(0, 0, 0, 0);
 
-      while (nextDue <= today) {
-        // Create transaction
-        const newTransaction: Omit<Transaction, 'id'> = {
-          amount: rt.amount,
-          description: `${rt.description} (Recurring)`,
-          date: nextDue.toISOString().split('T')[0],
-          category: rt.category,
-          categoryId: rt.categoryId,
-          type: rt.type
-        };
+      // Only process if due date is today or in the past
+      if (nextDue > today) continue;
 
-        try {
-          await addTransactionToFirestore(user.id, newTransaction);
-        } catch (error) {
-          console.error('Error creating recurring transaction:', error);
-        }
+      // Check if we already have a transaction for this recurring item on this date
+      // by looking for "(Recurring)" in description with matching date
+      const dateStr = nextDue.toISOString().split('T')[0];
+      const existingTransaction = transactions.find(t =>
+        t.description.includes('(Recurring)') &&
+        t.description.includes(rt.description) &&
+        t.date === dateStr
+      );
 
-        // Calculate next due date
+      // Skip if transaction already exists for this date
+      if (existingTransaction) {
+        // Still need to advance the nextDueDate if it hasn't been updated
+        let newNextDue = new Date(nextDue);
         switch (rt.frequency) {
-          case 'daily':
-            nextDue.setDate(nextDue.getDate() + 1);
-            break;
-          case 'weekly':
-            nextDue.setDate(nextDue.getDate() + 7);
-            break;
-          case 'monthly':
-            nextDue.setMonth(nextDue.getMonth() + 1);
-            break;
-          case 'yearly':
-            nextDue.setFullYear(nextDue.getFullYear() + 1);
-            break;
+          case 'daily': newNextDue.setDate(newNextDue.getDate() + 1); break;
+          case 'weekly': newNextDue.setDate(newNextDue.getDate() + 7); break;
+          case 'monthly': newNextDue.setMonth(newNextDue.getMonth() + 1); break;
+          case 'yearly': newNextDue.setFullYear(newNextDue.getFullYear() + 1); break;
         }
+
+        if (newNextDue.getTime() !== new Date(rt.nextDueDate).getTime()) {
+          try {
+            await updateRecurringInFirestore(user.id, {
+              ...rt,
+              nextDueDate: newNextDue.toISOString().split('T')[0]
+            });
+          } catch (error) {
+            console.error('Error updating recurring transaction date:', error);
+          }
+        }
+        continue;
       }
 
-      // Update recurring transaction with new nextDueDate
-      if (nextDue.getTime() !== new Date(rt.nextDueDate).getTime()) {
-        try {
-          await updateRecurringInFirestore(user.id, {
-            ...rt,
-            nextDueDate: nextDue.toISOString().split('T')[0]
-          });
-        } catch (error) {
-          console.error('Error updating recurring transaction:', error);
-        }
+      // Calculate next due date first
+      let newNextDue = new Date(nextDue);
+      switch (rt.frequency) {
+        case 'daily': newNextDue.setDate(newNextDue.getDate() + 1); break;
+        case 'weekly': newNextDue.setDate(newNextDue.getDate() + 7); break;
+        case 'monthly': newNextDue.setMonth(newNextDue.getMonth() + 1); break;
+        case 'yearly': newNextDue.setFullYear(newNextDue.getFullYear() + 1); break;
+      }
+
+      // Update nextDueDate FIRST to prevent duplicates on refresh
+      try {
+        await updateRecurringInFirestore(user.id, {
+          ...rt,
+          nextDueDate: newNextDue.toISOString().split('T')[0]
+        });
+      } catch (error) {
+        console.error('Error updating recurring transaction:', error);
+        continue; // Don't create transaction if we couldn't update the date
+      }
+
+      // Now create the transaction
+      const newTransaction: Omit<Transaction, 'id'> = {
+        amount: rt.amount,
+        description: `${rt.description} (Recurring)`,
+        date: dateStr,
+        category: rt.category,
+        categoryId: rt.categoryId,
+        type: rt.type
+      };
+
+      try {
+        await addTransactionToFirestore(user.id, newTransaction);
+      } catch (error) {
+        console.error('Error creating recurring transaction:', error);
       }
     }
-  }, [user, recurringTransactions]);
+  }, [user, recurringTransactions, transactions]);
 
   useEffect(() => {
-    if (user && recurringTransactions.length > 0) {
+    // Only process recurring transactions once per session to prevent duplicates
+    if (user && recurringTransactions.length > 0 && !recurringProcessedRef.current) {
+      recurringProcessedRef.current = true;
       processRecurringTransactions();
     }
   }, [user, recurringTransactions, processRecurringTransactions]);
@@ -821,12 +846,120 @@ const AppContent: React.FC = () => {
         <AITutorial onClose={() => setShowAITutorial(false)} />
       )}
 
-      {/* Main App */}
-      <div className="max-w-md mx-auto pb-20">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient p-6 text-white">
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-60 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col z-40">
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+          <img src="/logo.png" alt="JebKharch" className="h-12 w-auto object-contain" />
+        </div>
+
+        {/* User Info */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            {user.avatarUrl && (
+              <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full" />
+            )}
+            <div>
+              <p className="font-bold text-slate-800 dark:text-white text-sm">{user.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-3 space-y-1">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'dashboard'
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+          >
+            <LayoutGrid size={20} />
+            Dashboard
+          </button>
+          <button
+            onClick={() => setActiveTab('charts')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'charts'
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+          >
+            <PieChart size={20} />
+            Charts
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'analytics'
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+          >
+            <Calculator size={20} />
+            Analytics
+          </button>
+          <button
+            onClick={() => setActiveTab('ai')}
+            disabled={!hasApiKey}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'ai'
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              } ${!hasApiKey ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Sparkles size={20} />
+            AI Advisor
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === 'settings'
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+          >
+            <Settings size={20} />
+            Settings
+          </button>
+        </nav>
+
+        {/* Add Transaction Button - Desktop */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <button
+            onClick={() => setShowAddTransaction(true)}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all"
+          >
+            <Plus size={20} />
+            Add Transaction
+          </button>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => setIsPrivacyMode(!isPrivacyMode)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500"
+              title={isPrivacyMode ? 'Show amounts' : 'Hide amounts'}
+            >
+              {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors text-rose-500"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main App Container - Responsive */}
+      <div className="md:ml-60 pb-20 md:pb-6">
+        {/* Header - Mobile only shows full header, desktop shows just month nav */}
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-[length:200%_auto] animate-gradient p-4 md:p-6 text-white">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <div className="flex items-start justify-between gap-4 mb-4">
+            {/* Logo and Icons - Mobile only (hidden on desktop since sidebar has these) */}
+            <div className="md:hidden flex items-start justify-between gap-4 mb-4">
               {/* Left: Logo */}
               <img
                 src="/logo.png"
@@ -844,12 +977,6 @@ const AppContent: React.FC = () => {
                     <HelpCircle size={20} />
                   </button>
                   <button
-                    onClick={() => setIsDarkMode(!isDarkMode)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                  >
-                    {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                  </button>
-                  <button
                     onClick={() => setIsPrivacyMode(!isPrivacyMode)}
                     className="p-2 hover:bg-white/10 rounded-full transition-colors"
                   >
@@ -861,7 +988,7 @@ const AppContent: React.FC = () => {
               </div>
             </div>
 
-            {/* Month Navigation */}
+            {/* Month Navigation - Visible on all screens */}
             <div className="flex items-center justify-between">
               <button onClick={goToPreviousMonth} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
                 <ChevronLeft size={18} />
@@ -885,7 +1012,7 @@ const AppContent: React.FC = () => {
         )}
 
         {/* Tab Content */}
-        <div className="p-6">
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-fade-in">
               <SummaryCards summary={summary} isPrivacyMode={isPrivacyMode} />
@@ -1124,8 +1251,8 @@ const AppContent: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-lg">
+        {/* Bottom Navigation - Mobile Only */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-lg">
           <div className="max-w-md mx-auto flex items-center justify-around py-3 px-6">
             <button
               onClick={() => setActiveTab('dashboard')}

@@ -110,8 +110,8 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, budget = 0,
         </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Stats Grid - Responsive */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100/50 dark:border-slate-800 flex flex-col justify-center">
           <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-2">
             <div className="p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-full">
@@ -143,7 +143,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, budget = 0,
           )}
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-850 p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-slate-700 col-span-2 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-850 p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-slate-700 col-span-2 md:col-span-2 flex items-center justify-between">
           <div className="flex flex-col">
             <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
               <TrendingUp size={16} />

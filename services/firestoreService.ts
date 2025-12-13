@@ -19,6 +19,13 @@ import { Transaction, Category, SavingsGoal, RecurringTransaction } from '../typ
 import { Debt } from '../types/debt';
 import { addDoc } from 'firebase/firestore';
 
+// Helper function to remove undefined values (Firestore doesn't accept undefined)
+const removeUndefined = <T extends Record<string, any>>(obj: T): Partial<T> => {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([_, v]) => v !== undefined)
+    ) as Partial<T>;
+};
+
 /**
  * Firestore Service - Professional database operations for lakhs of users
  * 
@@ -60,11 +67,11 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
             id: newDocRef.id
         };
 
-        await setDoc(newDocRef, {
+        await setDoc(newDocRef, removeUndefined({
             ...newTransaction,
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now()
-        });
+        }));
 
         return newTransaction;
     } catch (error) {
@@ -76,10 +83,10 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 export const updateTransaction = async (userId: string, transaction: Transaction): Promise<void> => {
     try {
         const transactionRef = doc(db, `users/${userId}/transactions/${transaction.id}`);
-        await updateDoc(transactionRef, {
+        await updateDoc(transactionRef, removeUndefined({
             ...transaction,
             updatedAt: Timestamp.now()
-        });
+        }));
     } catch (error) {
         console.error('Error updating transaction:', error);
         throw new Error('Failed to update transaction');
@@ -143,7 +150,7 @@ export const addCategory = async (userId: string, category: Omit<Category, 'id'>
             id: newDocRef.id
         };
 
-        await setDoc(newDocRef, newCategory);
+        await setDoc(newDocRef, removeUndefined(newCategory));
         return newCategory;
     } catch (error) {
         console.error('Error adding category:', error);
@@ -154,7 +161,7 @@ export const addCategory = async (userId: string, category: Omit<Category, 'id'>
 export const updateCategory = async (userId: string, category: Category): Promise<void> => {
     try {
         const categoryRef = doc(db, `users/${userId}/categories/${category.id}`);
-        await updateDoc(categoryRef, { ...category });
+        await updateDoc(categoryRef, removeUndefined(category));
     } catch (error) {
         console.error('Error updating category:', error);
         throw new Error('Failed to update category');
@@ -217,7 +224,7 @@ export const addGoal = async (userId: string, goal: Omit<SavingsGoal, 'id'>): Pr
             id: newDocRef.id
         };
 
-        await setDoc(newDocRef, newGoal);
+        await setDoc(newDocRef, removeUndefined(newGoal));
         return newGoal;
     } catch (error) {
         console.error('Error adding goal:', error);
@@ -228,7 +235,7 @@ export const addGoal = async (userId: string, goal: Omit<SavingsGoal, 'id'>): Pr
 export const updateGoal = async (userId: string, goal: SavingsGoal): Promise<void> => {
     try {
         const goalRef = doc(db, `users/${userId}/goals/${goal.id}`);
-        await updateDoc(goalRef, { ...goal });
+        await updateDoc(goalRef, removeUndefined(goal));
     } catch (error) {
         console.error('Error updating goal:', error);
         throw new Error('Failed to update goal');
@@ -291,7 +298,7 @@ export const addRecurringTransaction = async (userId: string, recurring: Omit<Re
             id: newDocRef.id
         };
 
-        await setDoc(newDocRef, newRecurring);
+        await setDoc(newDocRef, removeUndefined(newRecurring));
         return newRecurring;
     } catch (error) {
         console.error('Error adding recurring transaction:', error);
@@ -302,7 +309,7 @@ export const addRecurringTransaction = async (userId: string, recurring: Omit<Re
 export const updateRecurringTransaction = async (userId: string, recurring: RecurringTransaction): Promise<void> => {
     try {
         const recurringRef = doc(db, `users/${userId}/recurring/${recurring.id}`);
-        await updateDoc(recurringRef, { ...recurring });
+        await updateDoc(recurringRef, removeUndefined(recurring));
     } catch (error) {
         console.error('Error updating recurring transaction:', error);
         throw new Error('Failed to update recurring transaction');
@@ -398,10 +405,10 @@ export const batchAddCategories = async (userId: string, categories: Omit<Catego
 
         categories.forEach((category) => {
             const newDocRef = doc(categoriesRef);
-            batch.set(newDocRef, {
+            batch.set(newDocRef, removeUndefined({
                 ...category,
                 id: newDocRef.id
-            });
+            }));
         });
 
         await batch.commit();
@@ -411,10 +418,17 @@ export const batchAddCategories = async (userId: string, categories: Omit<Catego
     }
 };
 
-export const addDebt = async (userId: string, debt: Omit<Debt, 'id'>): Promise<void> => {
+export const addDebt = async (userId: string, debt: Omit<Debt, 'id'>): Promise<Debt> => {
     try {
         const debtRef = collection(db, `users/${userId}/debts`);
-        await addDoc(debtRef, debt);
+        const docRef = await addDoc(debtRef, removeUndefined({
+            ...debt,
+            createdAt: Timestamp.now()
+        }));
+        return {
+            ...debt,
+            id: docRef.id
+        } as Debt;
     } catch (error) {
         console.error('Error adding debt:', error);
         throw new Error('Failed to add debt');
@@ -424,7 +438,7 @@ export const addDebt = async (userId: string, debt: Omit<Debt, 'id'>): Promise<v
 export const updateDebt = async (userId: string, debt: Debt): Promise<void> => {
     try {
         const debtRef = doc(db, `users/${userId}/debts/${debt.id}`);
-        await updateDoc(debtRef, { ...debt });
+        await updateDoc(debtRef, removeUndefined(debt));
     } catch (error) {
         console.error('Error updating debt:', error);
         throw new Error('Failed to update debt');
@@ -454,5 +468,7 @@ export const onDebtsSnapshot = (
             ...doc.data()
         } as Debt));
         callback(debts);
+    }, (error) => {
+        console.error('Error in debts snapshot:', error);
     });
 };
