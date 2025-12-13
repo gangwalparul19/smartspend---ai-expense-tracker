@@ -201,8 +201,8 @@ const AppContent: React.FC = () => {
   const checkForMigration = () => {
     if (migrationChecked) return;
 
-    const hasLocalTransactions = localStorage.getItem('smartspend_transactions_v2');
-    const hasLocalCategories = localStorage.getItem('smartspend_categories');
+    const hasLocalTransactions = localStorage.getItem('jebkharch_transactions_v2');
+    const hasLocalCategories = localStorage.getItem('jebkharch_categories');
 
     if (hasLocalTransactions || hasLocalCategories) {
       setShowMigrationDialog(true);
@@ -219,21 +219,21 @@ const AppContent: React.FC = () => {
       setDataLoading(true);
 
       // Migrate transactions
-      const localTransactions = localStorage.getItem('smartspend_transactions_v2');
+      const localTransactions = localStorage.getItem('jebkharch_transactions_v2');
       if (localTransactions) {
         const parsedTransactions = JSON.parse(localTransactions);
         await batchAddTransactions(user.id, parsedTransactions);
       }
 
       // Migrate categories
-      const localCategories = localStorage.getItem('smartspend_categories');
+      const localCategories = localStorage.getItem('jebkharch_categories');
       if (localCategories) {
         const parsedCategories = JSON.parse(localCategories);
         await batchAddCategories(user.id, parsedCategories);
       }
 
       // Migrate goals
-      const localGoals = localStorage.getItem('smartspend_goals');
+      const localGoals = localStorage.getItem('jebkharch_goals');
       if (localGoals) {
         const goals: SavingsGoal[] = JSON.parse(localGoals);
         for (const goal of goals) {
@@ -242,7 +242,7 @@ const AppContent: React.FC = () => {
       }
 
       // Migrate recurring
-      const localRecurring = localStorage.getItem('smartspend_recurring');
+      const localRecurring = localStorage.getItem('jebkharch_recurring');
       if (localRecurring) {
         const recurring: RecurringTransaction[] = JSON.parse(localRecurring);
         for (const rt of recurring) {
@@ -251,7 +251,7 @@ const AppContent: React.FC = () => {
       }
 
       // Migrate budget
-      const localBudget = localStorage.getItem('smartspend_budget');
+      const localBudget = localStorage.getItem('jebkharch_budget');
       if (localBudget) {
         await setMonthlyBudgetInFirestore(user.id, parseFloat(localBudget));
       }
@@ -261,11 +261,11 @@ const AppContent: React.FC = () => {
 
       // Optionally clear localStorage
       if (window.confirm('Clear local data now that it\'s in the cloud?')) {
-        localStorage.removeItem('smartspend_transactions_v2');
-        localStorage.removeItem('smartspend_categories');
-        localStorage.removeItem('smartspend_goals');
-        localStorage.removeItem('smartspend_recurring');
-        localStorage.removeItem('smartspend_budget');
+        localStorage.removeItem('jebkharchtransactions_v2');
+        localStorage.removeItem('jebkharchcategories');
+        localStorage.removeItem('jebkharchgoals');
+        localStorage.removeItem('jebkharchrecurring');
+        localStorage.removeItem('jebkharchbudget');
       }
     } catch (error) {
       console.error('Migration error:', error);
@@ -681,7 +681,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={48} className="text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading SmartSpend...</p>
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading Jeb Kharch...</p>
         </div>
       </div>
     );
