@@ -30,7 +30,8 @@ export const uploadReceipt = async (
         // Get download URL
         const url = await getDownloadURL(storageRef);
 
-        return { url, fileName: file.name };
+        // Return the actual fileName used in Storage, not the original file.name
+        return { url, fileName };
     } catch (error) {
         console.error('Error uploading receipt:', error);
         throw new Error('Failed to upload receipt');

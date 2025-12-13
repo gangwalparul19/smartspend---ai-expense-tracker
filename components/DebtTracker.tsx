@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Debt, DebtType } from '../types/debt';
-import { CreditCard, Plus, Trash2, Edit2, Check, X, Calendar, DollarSign, TrendingDown, AlertCircle } from 'lucide-react';
+import { CreditCard, Plus, Trash2, Edit2, Check, X, Calendar } from 'lucide-react';
 
 interface DebtTrackerProps {
     debts: Debt[];
-    onAddDebt: (debt: Debt) => void;
+    onAddDebt: (debt: Omit<Debt, 'id'>) => void;
     onUpdateDebt: (debt: Debt) => void;
     onDeleteDebt: (id: string) => void;
     onClose: () => void;

@@ -4,7 +4,7 @@ import { Plus, Target, Trash2, Check, X } from 'lucide-react';
 
 interface GoalTrackerProps {
   goals: SavingsGoal[];
-  onAddGoal: (goal: SavingsGoal) => void;
+  onAddGoal: (goal: Omit<SavingsGoal, 'id'>) => void;
   onUpdateGoal: (goal: SavingsGoal) => void;
   onDeleteGoal: (id: string) => void;
   onClose: () => void;

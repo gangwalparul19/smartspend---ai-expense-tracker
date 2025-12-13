@@ -5,15 +5,15 @@ import { parseTransactionFromNaturalLanguage, analyzeReceipt, isApiKeyAvailable 
 
 interface AddTransactionProps {
     categories: Category[];
-    onAdd: (transaction: Transaction) => void;
+    onAdd: (transaction: Omit<Transaction, 'id'>) => void;
     onClose: () => void;
     onOpenCategoryManager: () => void;
 }
 
 const QUICK_SUGGESTIONS = [
-    { label: '☕ Coffee', desc: 'Coffee', amount: '50' },
-    { label: '🥗 Lunch', desc: 'Lunch', amount: '200' },
-    { label: '⛽ Fuel', desc: 'Fuel', amount: '500' },
+    { label: '☕ Tea', desc: 'Tea', amount: '12' },
+    { label: '🥗 Lunch', desc: 'Lunch', amount: '85' },
+    { label: '⛽ Fuel', desc: 'Fuel', amount: '2850' },
     { label: '🥦 Grocery', desc: 'Groceries', amount: '1000' },
     { label: '🚕 Cab', desc: 'Uber/Ola', amount: '300' },
 ];
@@ -52,7 +52,7 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
         } else {
             setCategoryId('');
         }
-    }, [type, availableCategories]);
+    }, [type, availableCategories, categoryId]);
 
     const handleStartListening = () => {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -159,8 +159,7 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
 
         const selectedCategory = categories.find(c => c.id === categoryId);
 
-        const newTransaction: Transaction = {
-            id: Date.now().toString(),
+        const newTransaction: Omit<Transaction, 'id'> = {
             amount: parseFloat(amount),
             description,
             date: date,

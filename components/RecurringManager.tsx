@@ -5,10 +5,11 @@ import { Plus, Trash2, Calendar, RefreshCw, Power, Check, X } from 'lucide-react
 interface RecurringManagerProps {
   recurringTransactions: RecurringTransaction[];
   categories: Category[];
-  onAddRecurring: (transaction: RecurringTransaction) => void;
+  onAddRecurring: (transaction: Omit<RecurringTransaction, 'id'>) => void;
   onDeleteRecurring: (id: string) => void;
   onToggleRecurring: (id: string) => void;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 export const RecurringManager: React.FC<RecurringManagerProps> = ({
@@ -17,7 +18,8 @@ export const RecurringManager: React.FC<RecurringManagerProps> = ({
   onAddRecurring,
   onDeleteRecurring,
   onToggleRecurring,
-  onClose
+  onClose,
+  embedded = false
 }) => {
   const [isAdding, setIsAdding] = useState(false);
 
@@ -75,12 +77,14 @@ export const RecurringManager: React.FC<RecurringManagerProps> = ({
           >
             <Plus size={14} /> NEW
           </button>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-          >
-            <X size={16} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
-          </button>
+          {!embedded && (
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+            >
+              <X size={16} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -519,28 +519,48 @@ const App: React.FC = () => {
 
   const handleAddDebt = async (debt: Debt) => {
     if (!user) return;
-    await addDebt(user.id, debt);
+    try {
+      await addDebt(user.id, debt);
+    } catch (error) {
+      console.error('Error adding debt:', error);
+      alert('Failed to add debt. Please try again.');
+    }
   };
   const handleUpdateDebt = async (debt: Debt) => {
     if (!user) return;
-    await updateDebt(user.id, debt);
+    try {
+      await updateDebt(user.id, debt);
+    } catch (error) {
+      console.error('Error updating debt:', error);
+      alert('Failed to update debt. Please try again.');
+    }
   };
   const handleDeleteDebt = async (id: string) => {
     if (!user) return;
-    await deleteDebt(user.id, id);
+    try {
+      await deleteDebt(user.id, id);
+    } catch (error) {
+      console.error('Error deleting debt:', error);
+      alert('Failed to delete debt. Please try again.');
+    }
   };
   const handleReceiptUpload = async (transactionId: string, file: File) => {
     if (!user) return;
-    const { url, fileName } = await uploadReceipt(user.id, transactionId, file);
+    try {
+      const { url, fileName } = await uploadReceipt(user.id, transactionId, file);
 
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (transaction) {
-      await updateTransactionInFirestore(user.id, {
-        ...transaction,
-        receiptUrl: url,
-        receiptFileName: fileName,
-        receiptUploadedAt: new Date().toISOString()
-      });
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (transaction) {
+        await updateTransactionInFirestore(user.id, {
+          ...transaction,
+          receiptUrl: url,
+          receiptFileName: fileName,
+          receiptUploadedAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading receipt:', error);
+      alert('Failed to upload receipt. Please try again.');
     }
   };
   const handleReceiptDelete = async (transactionId: string) => {
