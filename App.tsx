@@ -753,8 +753,8 @@ const AppContent: React.FC = () => {
       {/* Modals */}
       {showCategoryManager && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-          <div className="min-h-screen px-4 py-8">
-            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+          <div className="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
               <CategoryManager
                 categories={categories}
                 onAddCategory={handleAddCategory}
@@ -769,8 +769,8 @@ const AppContent: React.FC = () => {
 
       {showGoalTracker && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-          <div className="min-h-screen px-4 py-8">
-            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+          <div className="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
               <GoalTracker
                 goals={goals}
                 onAddGoal={handleAddGoal}
@@ -786,8 +786,8 @@ const AppContent: React.FC = () => {
       {/* Debt Tracker Modal */}
       {showDebtTracker && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-          <div className="min-h-screen px-4 py-8">
-            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+          <div className="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
               <DebtTracker
                 debts={debts}
                 onAddDebt={handleAddDebt}
@@ -811,8 +811,8 @@ const AppContent: React.FC = () => {
 
       {showRecurringManager && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-          <div className="min-h-screen px-4 py-8">
-            <div className="max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6">
+          <div className="min-h-screen px-4 py-8 flex items-start justify-center">
+            <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
               <RecurringManager
                 recurringTransactions={recurringTransactions}
                 categories={categories}
