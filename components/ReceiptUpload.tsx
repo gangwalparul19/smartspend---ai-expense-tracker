@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X, FileImage, Loader2 } from 'lucide-react';
+import { useToast } from './ToastContext';
 
 interface ReceiptUploadProps {
     onUpload: (file: File) => Promise<void>;
@@ -15,6 +16,7 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
     currentReceipt,
     onRemove
 }) => {
+    const { showToast } = useToast();
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -26,13 +28,13 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
         // Validate file type
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
         if (!validTypes.includes(file.type)) {
-            alert('Please upload an image (JPG, PNG, WEBP)  or PDF file');
+            showToast('Please upload an image (JPG, PNG, WEBP) or PDF file', 'warning');
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
+            showToast('File size must be less than 5MB', 'warning');
             return;
         }
 
@@ -51,7 +53,7 @@ export const ReceiptUpload: React.FC<ReceiptUploadProps> = ({
             await onUpload(file);
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Failed to upload receipt. Please try again.');
+            showToast('Failed to upload receipt. Please try again.', 'error');
         } finally {
             setUploading(false);
             setPreview(null);

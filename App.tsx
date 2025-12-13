@@ -23,6 +23,7 @@ import { ReceiptUpload } from './components/ReceiptUpload';
 import { ReceiptViewer } from './components/ReceiptViewer';
 import { uploadReceipt, deleteReceipt } from './services/storageService';
 import { Debt } from './types/debt';
+import { ToastProvider, useToast } from './components/ToastContext';
 import {
   onTransactionsSnapshot,
   onCategoriesSnapshot,
@@ -64,7 +65,9 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '10', name: 'PF', type: 'investment', isDefault: true },
 ];
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { showToast } = useToast();
+
   // Theme
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('smartspend_theme');
@@ -251,7 +254,7 @@ const App: React.FC = () => {
         await setMonthlyBudgetInFirestore(user.id, parseFloat(localBudget));
       }
 
-      alert('✅ Data migrated successfully! Welcome to cloud sync.');
+      showToast('Data migrated successfully! Welcome to cloud sync.', 'success');
       setShowMigrationDialog(false);
 
       // Optionally clear localStorage
@@ -264,7 +267,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Migration error:', error);
-      alert('❌ Migration failed. Please try again or contact support.');
+      showToast('Migration failed. Please try again or contact support.', 'error');
     } finally {
       setDataLoading(false);
     }
@@ -383,7 +386,7 @@ const App: React.FC = () => {
       setShowAddTransaction(false);
     } catch (error) {
       console.error('Error adding transaction:', error);
-      alert('Failed to add transaction. Please try again.');
+      showToast('Failed to add transaction. Please try again.', 'error');
     }
   };
 
@@ -394,7 +397,7 @@ const App: React.FC = () => {
       await updateTransactionInFirestore(user.id, transaction);
     } catch (error) {
       console.error('Error updating transaction:', error);
-      alert('Failed to update transaction. Please try again.');
+      showToast('Failed to update transaction. Please try again.', 'error');
     }
   };
 
@@ -405,7 +408,7 @@ const App: React.FC = () => {
       await deleteTransactionFromFirestore(user.id, id);
     } catch (error) {
       console.error('Error deleting transaction:', error);
-      alert('Failed to delete transaction. Please try again.');
+      showToast('Failed to delete transaction. Please try again.', 'error');
     }
   };
 
@@ -417,7 +420,7 @@ const App: React.FC = () => {
       await addCategoryToFirestore(user.id, category);
     } catch (error) {
       console.error('Error adding category:', error);
-      alert('Failed to add category. Please try again.');
+      showToast('Failed to add category. Please try again.', 'error');
     }
   };
 
@@ -428,7 +431,7 @@ const App: React.FC = () => {
       await updateCategoryInFirestore(user.id, category);
     } catch (error) {
       console.error('Error updating category:', error);
-      alert('Failed to update category. Please try again.');
+      showToast('Failed to update category. Please try again.', 'error');
     }
   };
 
@@ -439,7 +442,7 @@ const App: React.FC = () => {
       await deleteCategoryFromFirestore(user.id, id);
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert('Failed to delete category. Please try again.');
+      showToast('Failed to delete category. Please try again.', 'error');
     }
   };
 
@@ -451,7 +454,7 @@ const App: React.FC = () => {
       await addGoalToFirestore(user.id, goal);
     } catch (error) {
       console.error('Error adding goal:', error);
-      alert('Failed to add goal. Please try again.');
+      showToast('Failed to add goal. Please try again.', 'error');
     }
   };
 
@@ -462,7 +465,7 @@ const App: React.FC = () => {
       await updateGoalInFirestore(user.id, goal);
     } catch (error) {
       console.error('Error updating goal:', error);
-      alert('Failed to update goal. Please try again.');
+      showToast('Failed to update goal. Please try again.', 'error');
     }
   };
 
@@ -473,7 +476,7 @@ const App: React.FC = () => {
       await deleteGoalFromFirestore(user.id, id);
     } catch (error) {
       console.error('Error deleting goal:', error);
-      alert('Failed to delete goal. Please try again.');
+      showToast('Failed to delete goal. Please try again.', 'error');
     }
   };
 
@@ -485,7 +488,7 @@ const App: React.FC = () => {
       await addRecurringToFirestore(user.id, rt);
     } catch (error) {
       console.error('Error adding recurring transaction:', error);
-      alert('Failed to add recurring transaction. Please try again.');
+      showToast('Failed to add recurring transaction. Please try again.', 'error');
     }
   };
 
@@ -502,7 +505,7 @@ const App: React.FC = () => {
       });
     } catch (error) {
       console.error('Error toggling recurring transaction:', error);
-      alert('Failed to toggle recurring transaction. Please try again.');
+      showToast('Failed to toggle recurring transaction. Please try again.', 'error');
     }
   };
 
@@ -513,7 +516,7 @@ const App: React.FC = () => {
       await deleteRecurringFromFirestore(user.id, id);
     } catch (error) {
       console.error('Error deleting recurring transaction:', error);
-      alert('Failed to delete recurring transaction. Please try again.');
+      showToast('Failed to delete recurring transaction. Please try again.', 'error');
     }
   };
 
@@ -523,7 +526,7 @@ const App: React.FC = () => {
       await addDebt(user.id, debt);
     } catch (error) {
       console.error('Error adding debt:', error);
-      alert('Failed to add debt. Please try again.');
+      showToast('Failed to add debt. Please try again.', 'error');
     }
   };
   const handleUpdateDebt = async (debt: Debt) => {
@@ -532,7 +535,7 @@ const App: React.FC = () => {
       await updateDebt(user.id, debt);
     } catch (error) {
       console.error('Error updating debt:', error);
-      alert('Failed to update debt. Please try again.');
+      showToast('Failed to update debt. Please try again.', 'error');
     }
   };
   const handleDeleteDebt = async (id: string) => {
@@ -541,7 +544,7 @@ const App: React.FC = () => {
       await deleteDebt(user.id, id);
     } catch (error) {
       console.error('Error deleting debt:', error);
-      alert('Failed to delete debt. Please try again.');
+      showToast('Failed to delete debt. Please try again.', 'error');
     }
   };
   const handleReceiptUpload = async (transactionId: string, file: File) => {
@@ -560,7 +563,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Error uploading receipt:', error);
-      alert('Failed to upload receipt. Please try again.');
+      showToast('Failed to upload receipt. Please try again.', 'error');
     }
   };
   const handleReceiptDelete = async (transactionId: string) => {
@@ -586,7 +589,7 @@ const App: React.FC = () => {
       setMonthlyBudget(newBudget);
     } catch (error) {
       console.error('Error updating budget:', error);
-      alert('Failed to update budget. Please try again.');
+      showToast('Failed to update budget. Please try again.', 'error');
     }
   };
 
@@ -597,7 +600,7 @@ const App: React.FC = () => {
       setActiveTab('dashboard');
     } catch (error) {
       console.error('Error signing out:', error);
-      alert('Failed to sign out. Please try again.');
+      showToast('Failed to sign out. Please try again.', 'error');
     }
   };
 
@@ -608,7 +611,7 @@ const App: React.FC = () => {
       setHasApiKey(true);
       setApiKeyInput('');
       setShowApiKey(false);
-      alert('✅ API key saved! AI features unlocked.');
+      showToast('API key saved! AI features unlocked.', 'success');
     }
   };
 
@@ -1170,6 +1173,15 @@ const App: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrapper component with ToastProvider
+const App: React.FC = () => {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 };
 

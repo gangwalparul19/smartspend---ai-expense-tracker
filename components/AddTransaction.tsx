@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Transaction, TransactionType, Category } from '../types';
 import { X, Sparkles, Loader2, Camera, Mic, MicOff, Settings, Calendar, DollarSign, AlignLeft, Key } from 'lucide-react';
 import { parseTransactionFromNaturalLanguage, analyzeReceipt, isApiKeyAvailable } from '../services/geminiService';
+import { useToast } from './ToastContext';
 
 interface AddTransactionProps {
     categories: Category[];
@@ -19,6 +20,7 @@ const QUICK_SUGGESTIONS = [
 ];
 
 export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAdd, onClose, onOpenCategoryManager }) => {
+    const { showToast } = useToast();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState<TransactionType>('expense');
@@ -70,7 +72,7 @@ export const AddTransaction: React.FC<AddTransactionProps> = ({ categories, onAd
             };
             recognition.start();
         } else {
-            alert("Voice input is not supported in this browser.");
+            showToast('Voice input is not supported in this browser.', 'warning');
         }
     };
 
