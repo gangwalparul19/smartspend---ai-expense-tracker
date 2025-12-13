@@ -1,4 +1,4 @@
-const CACHE_NAME = 'JebKharch-v2';
+const CACHE_NAME = 'JebKharch-v3';
 const urlsToCache = [
     '/',
     '/index.html',
